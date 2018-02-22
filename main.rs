@@ -1,5 +1,7 @@
 use std::io::Read;
 use std::net::TcpStream;
+use std::io::{BufReader,BufWriter};
+use std::io::BufRead;
 
 struct NullConnection {
   server_list: &'static str,
@@ -28,22 +30,20 @@ impl NullConnection {
 
 impl Connection {
   fn message_loop(&mut self) {
+    let mut reader = BufReader::new(&self.stream);
     let mut line = String::new();
     println!("connected!");
     loop {
-      println!("waiting on data!");
-      let result = self.stream.read_to_string(&mut line);
-      match result {
-        Ok(d) => println!("{}\n{}\n", d, line),
-        Err(e) => println!("error reading socket!")
-      }
+      let result = reader.read_line(&mut line);
+      println!("{}", line[(line.len()-result)];
+      println!("{} {}", line, line.len());
     }
   }
 }
 
 fn main() {
 
-  let mut connection = NullConnection { server_list: "irc.choopa.net:6667\nirc.efnet.net:6667", nick: "dasbawt" };
+  let mut connection = NullConnection { server_list: "irc.servercentral.net:6667\nirc.efnet.net:6667", nick: "dasbawt" };
   let mut connected = connection.connect().unwrap();
   connected.message_loop();
 

@@ -29,14 +29,18 @@ impl NullConnection {
 }
 
 impl Connection {
+  fn check_auth(&mut self, &'str auth_str) {
+    return;
+  }
   fn message_loop(&mut self) {
     let mut reader = BufReader::new(&self.stream);
     let mut line = String::new();
     println!("connected!");
     loop {
-      let result = reader.read_line(&mut line);
-      println!("{}", line[(line.len()-result)];
-      println!("{} {}", line, line.len());
+      let mut buf = vec![];
+      let msg = reader.read_until(b'\n', &mut buf);
+      let str = String::from_utf8(buf).unwrap();
+      self.check_auth(&str);
     }
   }
 }

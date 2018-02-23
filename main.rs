@@ -9,6 +9,22 @@ struct NullConnection {
   nick: &'static str,
 }
 
+struct ActiveConnection {
+  server_name: &'static str,
+  stream: TcpStream,
+  reader: BufReader<TcpStream>,
+  writer: BufWriter<TcpStream>
+}
+
+struct IRCMessage {
+  nick: &'static str,
+  ident: &'static str,
+  host: &'static str,
+  mtype: &'static str,
+  to: &'static str,
+  msg: &'static str
+}
+
 struct Connection {
   nick: &'static str,
   stream: TcpStream
@@ -42,16 +58,33 @@ impl Connection {
       let v: Vec<&str> = str.matches("Checking Ident").collect();
       if v.len() == 1 {
         println!("sending authorization information..");
-        writer.write(b"USER foo . . :real name\r\n\r\n");
-        writer.write(b"NICK bar\r\n\r\n");
+        let res = writer.write_all(b"NICK mybotname\n");
+        match res {
+          Ok(a) => println!("sent data!"),
+          Err(e) => println!("{}", e)
+        }
+        writer.write_all(b"USER boaty . . :real name a\r\n\r\n\r\n\n");
+        match writer.flush() {
+          Ok(a) => { println!("ok!") },
+          Err(b) => { println!("{}", b) }
+        }
       }
-      println!("{}", str);
     }
   }
 }
 
+impl ActiveConnection {
+  fn join(channel:String) {
+
+  }
+  fn message_loop(&mut self) {
+
+  }  
+}
+
 fn main() {
 
+  let channel_list = vec!["#bottesting"];
   let mut connection = NullConnection { server_list: "irc.servercentral.net:6667\nirc.efnet.net:6667", nick: "dasbawt" };
   let mut connected = connection.connect().unwrap();
   connected.message_loop();

@@ -3,6 +3,9 @@ use std::net::TcpStream;
 use std::io::{BufReader,BufWriter};
 use std::io::BufRead;
 use std::io::Write;
+use std::thread;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 struct NullConnection {
   server_list: &'static str,
@@ -29,6 +32,10 @@ struct Connection {
   stream: TcpStream
 }
 
+struct PingHandler<'b> {
+  stream: &'b TcpStream,
+}
+
 impl NullConnection {
   fn connect(&mut self) -> Option<Connection> {
     let servers = self.server_list.split("\n");
@@ -44,8 +51,19 @@ impl NullConnection {
   }
 }
 
+impl<'b> PingHandler<'b> {
+  fn ping_loop(&mut self) {
+    loop {
+ //     let mut buf = vec![];
+   //   let msg = self.reader.read_until(b'\n', &mut buf);
+     // let str = String::from_utf8(buf).unwrap();
+      // println!("{}", str);      
+    }
+  }
+}
+
 impl Connection {
-  fn message_loop(&mut self) -> Option<ActiveConnection> {
+  fn message_loop(&self) -> Option<ActiveConnection> {
     let mut reader = BufReader::new(&self.stream);
     let mut writer = BufWriter::new(&self.stream);
     let mut line = String::new();
@@ -96,19 +114,33 @@ impl<'a> ActiveConnection<'a> {
       println!("{}", str);
     }
   }  
+  fn ping_handler(&self) -> PingHandler {
+    return PingHandler { stream: &self.stream.clone() }
+  }
 }
 
 fn main() {
   let channel_list = vec!["#bottesting", "#morebottesting"];
   let mut connection = NullConnection { server_list: "irc.servercentral.net:6667\nirc.efnet.net:6667", nick: "dasbawt" };
+
   let mut connected = connection.connect().unwrap();
   let mut active = connected.message_loop().unwrap();
 
-  for chan in channel_list {
-    active.join(String::from(chan));
-  }
+    for chan in channel_list {
+      active.join(String::from(chan));
+    }
 
-  active.message_loop();
+    active.message_loop();
+
+  {
+
+    let mut ping_handler = Arc::new(active.ping_handler());
+
+   // thread::spawn(move || {
+   //   ping_handler.ping_loop();
+   //  } );
+
+  }
 
 }
 

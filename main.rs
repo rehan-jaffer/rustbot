@@ -73,6 +73,9 @@ impl Connection {
         println!("received end of MOTD");
         return Some(ActiveConnection { stream: &self.stream, reader: BufReader::new(self.stream.try_clone().expect("failed")), writer: BufWriter::new(self.stream.try_clone().expect("failed")) });
       }
+
+      println!("{}", str);
+
     }
 
   }
@@ -80,7 +83,9 @@ impl Connection {
 
 impl<'a> ActiveConnection<'a> {
   fn join(&mut self, channel:String) {
-    self.writer.write_all(String::from("JOIN #mybottest\n").as_bytes());
+    println!("Joining #{}", channel);
+    let join_str = format!("JOIN {}\n", channel);
+    self.writer.write_all(String::from(join_str).as_bytes());
     self.writer.flush();
   }
   fn message_loop(&mut self) {
@@ -94,11 +99,16 @@ impl<'a> ActiveConnection<'a> {
 }
 
 fn main() {
-
-  let channel_list = vec!["#bottesting"];
+  let channel_list = vec!["#bottesting", "#morebottesting"];
   let mut connection = NullConnection { server_list: "irc.servercentral.net:6667\nirc.efnet.net:6667", nick: "dasbawt" };
   let mut connected = connection.connect().unwrap();
   let mut active = connected.message_loop().unwrap();
-  active.join(String::from("channel"));
+
+  for chan in channel_list {
+    active.join(String::from(chan));
+  }
+
+  active.message_loop();
+
 }
 
